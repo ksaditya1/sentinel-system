@@ -12,9 +12,11 @@ const HEARTBEAT_STALE_MS = Number(process.env.HEARTBEAT_STALE_MS || 15000);
 app.use(cors());
 app.use(express.json());
 
+// Static assets
 app.use("/edge", express.static(path.join(__dirname, "edge")));
 app.use("/dashboard", express.static(path.join(__dirname, "dashboard")));
 
+// Pages
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
 });
@@ -25,6 +27,14 @@ app.get("/edge", (req, res) => {
 
 app.get("/dashboard", (req, res) => {
   res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
+});
+
+app.get("/dashboard/dashboard.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
+});
+
+app.get("/edge/edge.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "edge", "edge.html"));
 });
 
 // In-memory store
@@ -195,7 +205,6 @@ app.post("/api/event", verifyApiKey, (req, res) => {
 
   const device = devices.get(owner_token);
 
-  // If this token is not the registered owner, still accept into log but mark suspicious
   const isTrusted = !!device && device.locked && device.owner_token === owner_token;
 
   const event = {
