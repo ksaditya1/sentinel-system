@@ -1,4 +1,4 @@
-const API_BASE = "http://10.204.16.158:5000/api";
+const API_BASE = "https://sentinel-system.onrender.com/api";
 const API_KEY = "SAVITHA_SENTINEL_DEMO";
 const DEMO_PAIR_CODE = "DEMO2026";
 

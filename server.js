@@ -12,47 +12,70 @@ const HEARTBEAT_STALE_MS = Number(process.env.HEARTBEAT_STALE_MS || 15000);
 app.use(cors());
 app.use(express.json());
 
-// Static assets
-app.use("/edge", express.static(path.join(__dirname, "edge")));
-app.use("/dashboard", express.static(path.join(__dirname, "dashboard")));
+/*
+====================================================
+STATIC FILES
+====================================================
+*/
+const dashboardPath = path.resolve(__dirname, "dashboard");
+const edgePath = path.resolve(__dirname, "edge");
 
-// Pages
+app.use("/dashboard", express.static(dashboardPath));
+app.use("/edge", express.static(edgePath));
+
+/*
+====================================================
+PAGES
+====================================================
+*/
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
-});
-
-app.get("/edge", (req, res) => {
-  res.sendFile(path.join(__dirname, "edge", "edge.html"));
+  res.sendFile(path.join(dashboardPath, "dashboard.html"));
 });
 
 app.get("/dashboard", (req, res) => {
-  res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
+  res.sendFile(path.join(dashboardPath, "dashboard.html"));
 });
 
-app.get("/dashboard/dashboard.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
+app.get("/edge", (req, res) => {
+  res.sendFile(path.join(edgePath, "edge.html"));
 });
 
-app.get("/edge/edge.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "edge", "edge.html"));
-});
-
-// In-memory store
-const devices = new Map(); // owner_token -> device state
+/*
+====================================================
+IN-MEMORY STORE
+====================================================
+*/
+const devices = new Map();
 const events = [];
 const securityAlerts = [];
 const MAX_EVENTS = 1000;
 
+/*
+====================================================
+HELPERS
+====================================================
+*/
 function verifyApiKey(req, res, next) {
   const apiKey = req.headers["x-api-key"];
+
   if (!apiKey || apiKey !== API_KEY) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
   next();
 }
 
 function isSecurityMessage(message) {
-  const keywords = ["tamper", "tilt", "obstruction", "freeze", "motion", "takeover", "unauthorized"];
+  const keywords = [
+    "tamper",
+    "tilt",
+    "obstruction",
+    "freeze",
+    "motion",
+    "takeover",
+    "unauthorized"
+  ];
+
   const lower = String(message || "").toLowerCase();
   return keywords.some((k) => lower.includes(k));
 }
@@ -73,14 +96,18 @@ function addSecurityAlert(owner_token, message, extra = {}) {
     message,
     ...extra
   };
+
   pushEvent(securityAlerts, alert);
   pushEvent(events, alert);
+
   return alert;
 }
 
 function getLatestDevice() {
   const all = Array.from(devices.values());
+
   if (all.length === 0) return null;
+
   return all.sort((a, b) => {
     const at = a.last_heartbeat ? Date.parse(a.last_heartbeat) : 0;
     const bt = b.last_heartbeat ? Date.parse(b.last_heartbeat) : 0;
@@ -88,12 +115,18 @@ function getLatestDevice() {
   })[0];
 }
 
-// Pairing / ownership claim
+/*
+====================================================
+PAIRING
+====================================================
+*/
 app.post("/api/pair", verifyApiKey, (req, res) => {
   const { pair_code, owner_token } = req.body || {};
 
   if (!pair_code || !owner_token) {
-    return res.status(400).json({ error: "Missing pair_code or owner_token" });
+    return res.status(400).json({
+      error: "Missing pair_code or owner_token"
+    });
   }
 
   if (pair_code !== PAIR_CODE) {
@@ -101,12 +134,14 @@ app.post("/api/pair", verifyApiKey, (req, res) => {
       type: "pair_rejected",
       reason: "invalid_pair_code"
     });
-    return res.status(403).json({ error: "Unauthorized ownership claim" });
+
+    return res.status(403).json({
+      error: "Unauthorized ownership claim"
+    });
   }
 
   const existing = devices.get(owner_token);
 
-  // First time pairing for this token
   if (!existing) {
     const device = {
       device_id: makeDeviceId(owner_token),
@@ -129,10 +164,8 @@ app.post("/api/pair", verifyApiKey, (req, res) => {
     });
   }
 
-  // Already paired by same token, allow idempotent success
   if (existing.locked && existing.owner_token === owner_token) {
     existing.paired = true;
-    existing.paired_at = existing.paired_at || new Date().toISOString();
     devices.set(owner_token, existing);
 
     return res.json({
@@ -142,29 +175,36 @@ app.post("/api/pair", verifyApiKey, (req, res) => {
     });
   }
 
-  // Any other case should be rejected
   addSecurityAlert(owner_token, "Unauthorized ownership claim attempt", {
     type: "pair_rejected",
     reason: "locked_by_other_owner"
   });
 
-  return res.status(403).json({ error: "Device already owned / locked" });
+  return res.status(403).json({
+    error: "Device already owned / locked"
+  });
 });
 
-// Heartbeat
+/*
+====================================================
+HEARTBEAT
+====================================================
+*/
 app.post("/api/heartbeat", verifyApiKey, (req, res) => {
   const { mode, queue, owner_token, paired } = req.body || {};
 
   if (!owner_token) {
-    return res.status(400).json({ error: "Missing owner_token" });
+    return res.status(400).json({
+      error: "Missing owner_token"
+    });
   }
 
   const now = new Date().toISOString();
   const device = devices.get(owner_token);
 
   if (!device) {
-    // Unpaired token heartbeat -> treat as suspicious but still track
     const deviceId = makeDeviceId(owner_token);
+
     devices.set(owner_token, {
       device_id: deviceId,
       owner_token,
@@ -181,31 +221,47 @@ app.post("/api/heartbeat", verifyApiKey, (req, res) => {
       type: "unpaired_heartbeat"
     });
 
-    return res.json({ success: true, paired: false, locked: false });
+    return res.json({
+      success: true,
+      paired: false,
+      locked: false
+    });
   }
 
-  // Update legitimate device heartbeat
   device.last_heartbeat = now;
   device.mode = mode || "AUTONOMOUS";
   device.queue = Number(queue || 0);
   device.paired = !!paired;
   device.locked = true;
+
   devices.set(owner_token, device);
 
-  return res.json({ success: true, paired: device.paired, locked: true });
+  return res.json({
+    success: true,
+    paired: device.paired,
+    locked: true
+  });
 });
 
-// Event ingest
+/*
+====================================================
+EVENT INGEST
+====================================================
+*/
 app.post("/api/event", verifyApiKey, (req, res) => {
   const { message, ts, owner_token, paired } = req.body || {};
 
   if (!message || !owner_token) {
-    return res.status(400).json({ error: "Missing message or owner_token" });
+    return res.status(400).json({
+      error: "Missing message or owner_token"
+    });
   }
 
   const device = devices.get(owner_token);
-
-  const isTrusted = !!device && device.locked && device.owner_token === owner_token;
+  const isTrusted =
+    !!device &&
+    device.locked &&
+    device.owner_token === owner_token;
 
   const event = {
     time: new Date(ts || Date.now()).toISOString(),
@@ -221,15 +277,24 @@ app.post("/api/event", verifyApiKey, (req, res) => {
     pushEvent(securityAlerts, {
       time: event.time,
       owner_token,
-      message: !isTrusted ? `Suspicious event from untrusted token: ${message}` : message,
+      message: !isTrusted
+        ? `Suspicious event from untrusted token: ${message}`
+        : message,
       type: !isTrusted ? "suspicious_event" : "security_event"
     });
   }
 
-  return res.json({ success: true, trusted: isTrusted });
+  return res.json({
+    success: true,
+    trusted: isTrusted
+  });
 });
 
-// Status for dashboard
+/*
+====================================================
+DASHBOARD API
+====================================================
+*/
 app.get("/api/status", verifyApiKey, (req, res) => {
   const latest = getLatestDevice();
 
@@ -244,8 +309,13 @@ app.get("/api/status", verifyApiKey, (req, res) => {
     });
   }
 
-  const last = latest.last_heartbeat ? Date.parse(latest.last_heartbeat) : 0;
-  const stale = !last || (Date.now() - last) > HEARTBEAT_STALE_MS;
+  const last = latest.last_heartbeat
+    ? Date.parse(latest.last_heartbeat)
+    : 0;
+
+  const stale =
+    !last ||
+    Date.now() - last > HEARTBEAT_STALE_MS;
 
   res.json({
     device_id: latest.device_id,
@@ -257,7 +327,6 @@ app.get("/api/status", verifyApiKey, (req, res) => {
   });
 });
 
-// Event feeds
 app.get("/api/events", verifyApiKey, (req, res) => {
   res.json({
     events: events.slice(0, 100),
@@ -265,11 +334,13 @@ app.get("/api/events", verifyApiKey, (req, res) => {
   });
 });
 
-// Manual takeover alert helper
 app.post("/api/tamper-alert", verifyApiKey, (req, res) => {
   const { owner_token, message } = req.body || {};
+
   if (!owner_token) {
-    return res.status(400).json({ error: "Missing owner_token" });
+    return res.status(400).json({
+      error: "Missing owner_token"
+    });
   }
 
   addSecurityAlert(owner_token, message || "Tamper/takeover alert", {
@@ -279,12 +350,25 @@ app.post("/api/tamper-alert", verifyApiKey, (req, res) => {
   res.json({ success: true });
 });
 
-// Health
+/*
+====================================================
+HEALTH
+====================================================
+*/
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString()
+  });
 });
 
+/*
+====================================================
+START
+====================================================
+*/
 app.listen(PORT, () => {
-  console.log(`Sentinel Backend running on port ${PORT}`);
-  console.log(`API Base: http://localhost:${PORT}/api`);
+  console.log(`Sentinel backend running on port ${PORT}`);
+  console.log(`Dashboard path: ${dashboardPath}`);
+  console.log(`Edge path: ${edgePath}`);
 });
