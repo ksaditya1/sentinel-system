@@ -372,3 +372,17 @@ app.listen(PORT, () => {
   console.log(`Dashboard path: ${dashboardPath}`);
   console.log(`Edge path: ${edgePath}`);
 });
+
+const fs = require("fs");
+
+app.get("/debug-files", (req, res) => {
+  res.json({
+    cwd: process.cwd(),
+    dirname: __dirname,
+    rootFiles: fs.readdirSync(__dirname),
+    dashboardExists: fs.existsSync(path.join(__dirname, "dashboard")),
+    dashboardFiles: fs.existsSync(path.join(__dirname, "dashboard"))
+      ? fs.readdirSync(path.join(__dirname, "dashboard"))
+      : []
+  });
+});
