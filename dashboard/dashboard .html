@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sentinel Dashboard - Client monitoring console for edge devices">
+  <title>Sentinel Dashboard</title>
+  <link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+  <div class="dashboard-shell">
+    <header class="top-bar">
+      <div>
+        <h1>Sentinel Dashboard</h1>
+        <p>Client Monitoring Console</p>
+      </div>
+
+      <div id="globalStatus" class="status-badge offline">
+        OFFLINE
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h3>Device Status</h3>
+        <div class="metric">Node: <strong id="nodeId">--</strong></div>
+        <div class="metric">Mode: <strong id="mode">WAITING</strong></div>
+        <div class="metric">Heartbeat Age: <strong id="heartbeatAge">--</strong></div>
+        <div class="metric">Queue Depth: <strong id="queueDepth">0</strong></div>
+      </div>
+
+      <div class="card">
+        <h3>Security Alerts</h3>
+        <div id="securityAlerts" class="feed">
+          <div class="event">No security alerts</div>
+        </div>
+      </div>
+
+      <div class="card full">
+        <h3>Live Event Feed</h3>
+        <div id="eventFeed" class="feed">
+          <div class="event">Waiting for edge events...</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./dashboard.js"></script>
+</body>
+</html>

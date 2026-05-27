@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sentinel Edge - Autonomous camera monitoring with offline-first event queue">
+  <title>Sentinel Edge</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./edge.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div>
+        <h1>Sentinel Edge</h1>
+        <p id="deviceLabel">Node: EDGE-DEMO-01</p>
+      </div>
+      <div id="modeBadge" class="badge waiting">
+        WAITING
+      </div>
+    </header>
+
+    <!-- Optional pairing panel - can be removed without breaking JS -->
+    <section id="pairingPanel" class="card">
+      <h2>Pair Edge Device</h2>
+      <p>Enter pairing code to activate monitoring</p>
+      <input id="pairCode" type="password" placeholder="Enter Pair Code">
+      <button id="pairBtn">PAIR DEVICE</button>
+      <p id="pairStatus">Awaiting authorization...</p>
+    </section>
+
+    <section class="card">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="analysisCanvas" width="160" height="120"></canvas>
+    </section>
+
+    <section class="metrics-grid">
+      <div class="metric">
+        <span>Status</span>
+        <span id="queueStatus">0 queued</span>
+        <strong id="systemStatus">Initializing</strong>
+      </div>
+
+      <div class="metric">
+        <span>Connectivity</span>
+        <strong id="connectivityStatus">Checking</strong>
+      </div>
+
+      <div class="metric">
+        <span>Heartbeat</span>
+        <strong id="heartbeatStatus">Stopped</strong>
+      </div>
+
+      <div class="metric">
+        <span>Queue Depth</span>
+        <strong id="queueDepth">0</strong>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Recent Events</h3>
+      <div id="eventLog" class="event-log">
+        <div class="event">System initializing...</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="./edge.js"></script>
+</body>
+</html>

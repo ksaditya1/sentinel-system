@@ -1,0 +1,154 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0b1020;
+  color: #e8eefc;
+}
+
+.app-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: #111935;
+  border: 1px solid #22305f;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.badge {
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.badge.waiting {
+  background: #555;
+  color: #fff;
+}
+
+.badge.active {
+  background: #1d7f4c;
+  color: #fff;
+}
+
+.badge.offline {
+  background: #8b2e2e;
+  color: #fff;
+}
+
+video {
+  width: 100%;
+  max-height: 360px;
+  background: #000;
+  border-radius: 12px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+canvas {
+  width: 100%;
+  display: block;
+  border: 1px dashed #334;
+  border-radius: 10px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  background: #111935;
+  border: 1px solid #22305f;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metric span {
+  color: #9fb0d6;
+  font-size: 0.9rem;
+}
+
+.metric strong {
+  font-size: 1.1rem;
+}
+
+input, button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #34456f;
+  margin-top: 10px;
+  font-size: 1rem;
+}
+
+input {
+  background: #0b1020;
+  color: #fff;
+}
+
+button {
+  background: #2d6cdf;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+
+button:hover {
+  background: #2459b7;
+}
+
+.event-log {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event {
+  background: #0c1329;
+  border: 1px solid #24325d;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.95rem;
+}
+
+#pairingPanel {
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
