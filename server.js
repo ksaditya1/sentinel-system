@@ -12,13 +12,13 @@ const HEARTBEAT_STALE_MS = Number(process.env.HEARTBEAT_STALE_MS || 15000);
 app.use(cors());
 app.use(express.json());
 
-// Static files
+// Static asset folders only
 app.use("/edge", express.static(path.join(__dirname, "edge")));
 app.use("/dashboard", express.static(path.join(__dirname, "dashboard")));
 
 // Pages
 app.get("/", (req, res) => {
-  res.redirect("/dashboard/dashboard.html");
+  res.sendFile(path.join(__dirname, "dashboard", "dashboard.html"));
 });
 
 app.get("/edge", (req, res) => {
